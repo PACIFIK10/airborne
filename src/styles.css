@@ -1,0 +1,267 @@
+/* Palette taken from ATC paper flight progress strips: buff card stock,
+   grease-pencil graphite, and the three strip tints used to separate
+   departures, arrivals and overflights. */
+:root {
+  --paper: #efe9dc;
+  --paper-edge: #ddd4c1;
+  --ink: #23201a;
+  --ink-soft: #6b6559;
+  --strip-low: #c2542f;
+  --strip-mid: #2f6f8f;
+  --strip-high: #4a3f7a;
+  --focus: #1a1a1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 22rem 1fr;
+  height: 100%;
+}
+
+/* ---- Side panel --------------------------------------------------------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-right: 1px solid var(--paper-edge);
+  overflow: hidden;
+}
+
+.panel__head {
+  padding: 1.5rem 1.25rem 0.75rem;
+}
+
+.wordmark {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  font-style: italic;
+}
+
+.panel__sub {
+  margin: 0.4rem 0 0;
+  max-width: 34ch;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.panel__controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  padding: 0.75rem 1.25rem;
+}
+
+.search {
+  flex: 1;
+}
+
+.search__label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.25rem;
+}
+
+.search input,
+.refresh {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--paper-edge);
+  background: #fbf8f1;
+  color: var(--ink);
+  border-radius: 2px;
+}
+
+.search input {
+  width: 100%;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.refresh {
+  cursor: pointer;
+}
+
+.refresh:hover {
+  background: #f3eee3;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.status {
+  padding: 0 1.25rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.status__time {
+  margin-left: 0.5rem;
+}
+
+.status--bad {
+  color: var(--strip-low);
+}
+
+/* ---- Flight strips ------------------------------------------------------ */
+.strips {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  background: #fbf8f1;
+  border: 1px solid var(--paper-edge);
+  border-left: 4px solid var(--strip-mid);
+  border-radius: 1px;
+  margin-bottom: 3px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: right;
+  cursor: pointer;
+}
+
+.strip__call {
+  text-align: left;
+  font-weight: 600;
+}
+
+.strip--on {
+  background: #fff;
+  border-left-color: var(--strip-low);
+}
+
+.empty {
+  padding: 0 1.25rem 1.5rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  max-width: 32ch;
+}
+
+/* ---- Map ---------------------------------------------------------------- */
+.stage {
+  position: relative;
+}
+
+.map {
+  height: 100%;
+  width: 100%;
+  background: #f4f1ea;
+}
+
+.ac-wrap {
+  background: none;
+  border: none;
+}
+
+.ac {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 12px solid var(--strip-mid);
+  transform-origin: 50% 60%;
+}
+
+.ac--low {
+  border-bottom-color: var(--strip-low);
+}
+.ac--mid {
+  border-bottom-color: var(--strip-mid);
+}
+.ac--high {
+  border-bottom-color: var(--strip-high);
+}
+.ac--unknown {
+  border-bottom-color: var(--ink-soft);
+}
+
+
+/* Rotation is applied per-frame by the animation loop, so no CSS transition
+   here — the loop is already producing smooth motion and a transition would
+   fight it. */
+.ac--selected {
+  border-bottom-color: var(--strip-low) !important;
+  filter: drop-shadow(0 0 3px rgba(194, 84, 47, 0.9));
+}
+
+/* Desaturate the basemap so aircraft carry the colour. */
+.leaflet-tile-pane {
+  filter: grayscale(0.65) brightness(1.04);
+}
+
+.popup__call {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.popup__grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.15rem 0.75rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.popup__grid dt {
+  color: var(--ink-soft);
+}
+
+.popup__grid dd {
+  margin: 0;
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+@media (max-width: 720px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 45vh 55vh;
+  }
+  .panel {
+    order: 2;
+    border-right: none;
+    border-top: 1px solid var(--paper-edge);
+  }
+  .stage {
+    order: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
