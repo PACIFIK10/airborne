@@ -27,11 +27,19 @@ async function getAccessToken() {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: id,
-      client_secret: secret,
+      // Trim: values pasted into a dashboard field often carry a stray space
+      // or newline, and the auth server rejects them with an opaque 401.
+      client_id: id.trim(),
+      client_secret: secret.trim(),
     }),
   });
-  if (!res.ok) throw new Error(`Token request failed (${res.status})`);
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(
+      `Token request failed (${res.status}): ${detail.slice(0, 200)}`
+    );
+  }
 
   const json = await res.json();
   cachedToken = {
@@ -105,7 +113,16 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "s-maxage=10, stale-while-revalidate=30");
     res.status(200).json({ ...payload, cached: false });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Could not reach the flight data service." });
+    // Log the full error for the Vercel dashboard, and return enough detail
+    // that the cause is visible from the browser too. None of this leaks the
+    // credentials themselves — only whether the auth server accepted them.
+    console.error("flights handler failed:", err);
+    res.status(500).json({
+      error: "Could not reach the flight data service.",
+      detail: err.message,
+      hasCredentials: Boolean(
+        process.env.OPENSKY_CLIENT_ID && process.env.OPENSKY_CLIENT_SECRET
+      ),
+    });
   }
 }
